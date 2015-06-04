@@ -1,13 +1,13 @@
 # Docker Workshop
-In this workshop you will learn the basics of docker and docker-compose through creating a small
-collection of microservices.
+In this workshop you will learn the basics of `docker`, `docker-compose`, and `Swagger` through creating a small collection of microservices and writing documentation/tests for them. No Django or Python experience is assumed, but it is helpful. Code for the web applications is written in Python, but for the purposes of this workshop mostly involves editing configuration-like files.
 
 ## The application
-The application you will be using is a partially built django app written in python. The core logic
-has been written for you, the majority of the areas to fill in are related to configuration.
+You will build/complete a django web application (written in Python). The core logic has been written for you, the majority of the areas to fill in are related to configuration. The goal isn't to learn `django`, it is to learn `docker`.
 
 ### Backend JSON API
-The backend API that is written simply forwards requests to a third party API. To complete this app,
+The backend API is nothing more than a thin wrapper around a third party JSON API. For this demo we will be using the Google Maps geocode API. 
+
+To complete this app,
 it will require passing environment variables/configuration files around correctly so that the
 secret API key is not in version control, but can be accessed by the app. The app itself will be
 one container.
@@ -26,8 +26,20 @@ will require setting up a database (in this case postgres).
 As most web applications, things should be behind a reverse proxy of some variety. If we get far
 enough, we will go over how to setup Nginx to forward requests to the frontend and backend APIs.
 
+### Swagger Docs and Testing
+Its standard practice after implementing an API to test and/or document it. Unfortunately, documentation has a tendency to fall out of sync with the code since it is lower priority to code that "just works", or worse its forgotten.
+
+Swagger provides two powerful capabilities that help prevent this from happening:
+
+1. Expressive and descriptive language for specifying the schema for JSON APIs
+2. Based on that schema it can generate client API libraries in a variety of languages.
+3. If these client libraries are used in integration tests, it forces documentation schema to be in sync since it is used for testing.
+
+In this section you will learn how to write Swagger docs, setup code generation, and use them in integration tests.
+
 # Introduction to Docker
 In this section the goal is to:
+
 * Install Docker, docker-compose, and boot2docker.
 
 ## Terminology
@@ -66,6 +78,12 @@ regular Docker commands, but it makes it much easier.
 
 NOTE: if you run into permissions issues, download the binary using curl to your downloads
 directory, then rename it to docker-compose, chmod it, then move it to `/usr/local/bin`.
+
+## Backend API
+
+## Frontend API
+
+## Nginx
 
 # Licensing
 This workshop, including code and documentation is licensed under the Creative Commons Attribution
