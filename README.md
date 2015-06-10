@@ -1,43 +1,50 @@
 # Docker Workshop
-In this workshop you will learn the basics of `docker`, `docker-compose`, and `Swagger` through creating a small collection of microservices and writing documentation/tests for them. No Django or Python experience is assumed, but it is helpful. Code for the web applications is written in Python, but for the purposes of this workshop mostly involves editing configuration-like files.
+In this workshop you will learn the basics of `docker`, `docker-compose`, and `Swagger` through
+creating a small collection of microservices and writing documentation/tests for them. No Django or
+Python experience is assumed, but it is helpful. Code for the web applications is written in Python,
+but for the purposes of this workshop mostly involves editing configuration-like files.
 
-## The application
-You will build/complete a django web application (written in Python). The core logic has been written for you, the majority of the areas to fill in are related to configuration. The goal isn't to learn `django`, it is to learn `docker`.
+## Summary of Workshop
+You will build/complete a django web application (written in Python). The core logic has been
+written for you, the majority of the areas to fill in are related to configuration. The goal isn't
+to learn `django`, it is to learn `docker`.
 
 ### Backend JSON API
-The backend API is nothing more than a thin wrapper around a third party JSON API. For this demo we will be using the Google Maps geocode API. 
+The backend API is nothing more than a thin wrapper around a third party JSON API, in this case
+Google's geocoding API. For this demo we will be using the Google Maps geocode API.
 
-To complete this app,
-it will require passing environment variables/configuration files around correctly so that the
-secret API key is not in version control, but can be accessed by the app. The app itself will be
-one container.
+Completing this app will require passing environment variables/configuration files around
+correctly so that the secret API key is not in version control, but can be accessed by the app.
+The app itself will be one Docker container.
 
-Additionally, since APIs are commonly rate limited, you should cache those requests. Additionally,
-it is good practice to enable general caching for requests/responses. This will be done using a
-Redis container.
+Additionally, since APIs are commonly rate limited, you should cache requests made to external APIs.
+It is good practice to enable caching for requests made to your backend API. This will be done using
+an in memory cache called Redis and its accompanying package for python/django.
 
 ### Frontend JSON API
 The frontend API should receive information from the user, make a request to backend, then return
 the result processed in some way. This will require: knowing the host of the backend api, and
-enabling communication to it via docker. We would also like to store some user information so that
-will require setting up a database (in this case postgres).
+enabling communication to it via docker. The frontend will also have a basic user system to
+demonstrate how to setup Docker to work with databases (in this case Postgres).
 
 ### Nginx reverse proxy
-As most web applications, things should be behind a reverse proxy of some variety. If we get far
-enough, we will go over how to setup Nginx to forward requests to the frontend and backend APIs.
+As with most web applications, things should be behind a reverse proxy of some variety. In this
+workshop you will learn how Nginx can be configured to accomplish this.
 
 ### Swagger Docs and Testing
-Its standard practice after implementing an API to test and/or document it. Unfortunately, documentation has a tendency to fall out of sync with the code since it is lower priority to code that "just works", or worse its forgotten.
+Its standard practice after implementing an API to test and/or document it. Unfortunately,
+documentation has a tendency to fall out of sync with the code..
 
 Swagger provides two powerful capabilities that help prevent this from happening:
 
 1. Expressive and descriptive language for specifying the schema for JSON APIs
 2. Based on that schema it can generate client API libraries in a variety of languages.
-3. If these client libraries are used in integration tests, it forces documentation schema to be in sync since it is used for testing.
 
-In this section you will learn how to write Swagger docs, setup code generation, and use them in integration tests.
+To insure that documentation, tests, and code are in sync, you can write Swagger docs, generate
+API clients, then use that exclusively for writing integration tests. This enforces that the three
+are always in sync.
 
-# Introduction to Docker
+# Installation and Setup
 In this section the goal is to:
 
 * Install Docker, docker-compose, and boot2docker.
@@ -79,7 +86,58 @@ regular Docker commands, but it makes it much easier.
 NOTE: if you run into permissions issues, download the binary using curl to your downloads
 directory, then rename it to docker-compose, chmod it, then move it to `/usr/local/bin`.
 
+## Install Python
+Although we will be working mostly within Docker containers, it would be helpful to have a recent
+Python installation. For Macs, you can run `brew install python`. Also make sure that Python's
+package manager (pip) is installed. When this is done, execute `pip install -r requirements.txt`
+within this directory. If you would like to avoid dependency conflicts with existing projects, you
+can make use of [virtualenv](https://virtualenv.pypa.io/en/latest/)
+
+## API Key Setup
+Before getting started, you will need to signup for the
+[google API console](https://console.developers.google.com/project). Once you complete adding a
+project, enable the Google Places API for Webservices (APIs & auth -> APIs). Next you will need to
+generate credentials for reaching the API (APIs & auth -> credentials). Use the "Public API Access"
+option to create a "server key". The last step will be to save this API key in a suitable location.
+
+One way to do this is to create a bash script at `~/.secrets`. The file should look like:
+```bash
+export GOOGLE_PLACE_API_KEY=mysecretgoeshere
+```
+
+Then add this line to your `~/.bashrc`: `source ~/.secrets`.
+
+Lets test that you can reach the Google Place API. As part of the python installation
+(with `requirements.txt`) you also implicitly installed the python library we will use with the
+Google Places API. To test, start a python terminal session by typing `python` into your terminal.
+Then execute each line below:
+
+```python
+import os
+from googleplaces import GooglePlaces
+
+API_KEY = os.getenv("GOOGLE_PLACE_API_KEY")
+google_places = GooglePlaces(API_KEY)
+
+query_result = google_places.nearby_search(radius=50000, location='San Francisco, CA', keyword='climb touchstone')
+
+for place in query_result.places:
+    print place.name
+```
+
+The result should be a list of all the Touchstone climbing gyms in the area:
+* Mission Cliffs
+* Diablo Rock Gym
+* Berkeley Ironworks
+* The Studio Climbing
+* Great Western Power Company
+
+Also take note that this allowed you to access the API secret key without committing it to the
+source. We will use a similar technique later on with Docker
+
 ## Backend API
+This first part of the project is mostly written for you to use as a reference
+when working on the frontend API. 
 
 ## Frontend API
 

@@ -1,0 +1,4 @@
+django
+django-jsonview
+django-redis
+python-google-places

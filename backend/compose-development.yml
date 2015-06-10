@@ -1,0 +1,15 @@
+web:
+  extends:
+    file: compose-common.yml
+    service: web
+  environment:
+    - DJANGO_MODE=development
+  env_file: environment/secrets.txt
+  volumes:
+    - .:/web
+  links:
+    - redis
+redis:
+  extends:
+    file: compose-common.yml
+    service: redis
