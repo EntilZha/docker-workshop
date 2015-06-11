@@ -305,16 +305,58 @@ It will be helpful to know
 Unfortunately, the application still won't work because there is nothing telling it about how
 to reach the backend api. Within `frontend/api/views.py` you will notice a variable `BACKEND_API_URL`.
 This configures where the application should look for the API using knowledge about linked services.
-Modify your `docker-compose.yml` to include an `external_link`. Note, you will need the fully name
 of the container (eg `backend_web_1`).
 
 Now the service should be fully running. Browse to [http://drydock:8001/api/show](http://drydock:8001/api/show)
 or one of the other urls to test the application.
 
 It turns out, there is a better and more general way (albeit more complex) to allow APIs to
-communicate with each other. 
+communicate with each other.
 
 ## Nginx
+There are two issues with the prior approach:
+1. The requests are not being load balanced
+2. The above method does not extend to services which are interpendent. To make links, the container
+being linked to must already be running and by definition will not be linked to anything. This would
+not play well with for example a user service and a blog service. Links only work for services with
+a dependency graph that forms a directed acyclic graph (DAG).
+
+The easiest work around to this problem is to allow the containers making API calls to know what
+is the ip address of the host machine, then bind a Nginx instance to reverse proxy/load balance
+requests.
+
+You can do this using a piece of code from the Docker documentation:
+```bash
+HOST_IP=`ip route show 0.0.0.0/0 | grep -Eo 'via \S+' | awk '{ print \$2 }'` gunicorn -b 0.0.0.0:8000 frontend.wsgi
+```
+
+The code above will do a lookup of the host ip, then pass it along as `HOST_IP` to the container.
+This is the first piece of what we need to get Nginx running and is already included in the
+`docker-entrypoint.sh` in the frontend service. You will also need to go into `frontend/api/views.py`
+and switch the commented lines for `BACKEND_API_URL`. You should be able to retest this and see that
+it works since it is still reaching the same VirtualBox VM that docker is running at on the same
+port. Now remove the `external_link` from your compose configuraiton. The next step is to configure Nginx.
+
+### Nginx configuration
+Within the `nginx` folder there are all the required files in order to launch the reverse proxy
+fully configured. Unfortunately `nginx` does not allow access to environment variables in its
+configuration so the strategy used is to:
+1. Create a template nginx configuration file, with `DOCKER_IP` as a placeholder for the true
+ip address
+2. Run a python script which has the `HOST_IP` passed in like before, and interpolates the value
+into the nginx template file to create the actual configuration file.
+3. Run nginx with the generated configuration file.
+
+Now go back to `frontend/api/views.py` and change the port for `BACKEND_API_URL` to port `80`. This
+will point the requests to hit the `nginx` server, which will forwarded/load balance them to
+the backend server.
+
+Lastly, run the nginx container with:
+```bash
+cd docker-workshop/nginx
+docker build -t workshop-nginx .
+docker run --name workshop-nginx -p 80:80 workshop-nginx
+```
 
 # Licensing
 This workshop, including code and documentation is licensed under the Creative Commons Attribution

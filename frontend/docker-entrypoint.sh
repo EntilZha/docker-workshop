@@ -4,7 +4,7 @@ python manage.py migrate
 
 if [ "$DJANGO_MODE" = "development" ]
 then
-    python manage.py runserver 0.0.0.0:8000
+    HOST_IP=`ip route show 0.0.0.0/0 | grep -Eo 'via \S+' | awk '{ print \$2 }'` python manage.py runserver 0.0.0.0:8000
 else
-    gunicorn -b 0.0.0.0:8000 frontend.wsgi
+    HOST_IP=`ip route show 0.0.0.0/0 | grep -Eo 'via \S+' | awk '{ print \$2 }'` gunicorn -b 0.0.0.0:8000 frontend.wsgi
 fi

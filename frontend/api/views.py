@@ -4,15 +4,16 @@ from jsonview.exceptions import BadRequest
 from api.models import Place
 from django.utils import timezone
 import requests
+import os
 
 
-BACKEND_API_URL = 'http://backendweb:8000/places'
+BACKEND_API_URL = 'http://{0}:80/places'.format(os.getenv('HOST_IP'))
+#BACKEND_API_URL = 'http://backendweb:8000/places'
 
 
 def nearby_places(location, keywords):
     params = {'location': location, 'keywords': keywords}
     places = requests.get(BACKEND_API_URL, params=params)
-    print places.url
     return places.json()
 
 

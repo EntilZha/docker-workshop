@@ -1,2 +1,3 @@
 django
 python-google-places
+click
