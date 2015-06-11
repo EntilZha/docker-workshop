@@ -133,11 +133,13 @@ The result should be a list of all the Touchstone climbing gyms in the area:
 * Great Western Power Company
 
 Also take note that this allowed you to access the API secret key without committing it to the
-source. We will use a similar technique later on with Docker
+source. We will use a similar technique later on with Docker. In anticipation of this, browse
+to `/docker-workshop/backend/environment`, copy `secrets.txt.template` to `secrets.txt`, then
+input your API key. While you are at it, set the django secret key as well.
 
 ## Backend API
 This first part of the project is mostly written for you to use as a reference
-when working on the frontend API. 
+when working on the frontend API.
 
 ## Frontend API
 
