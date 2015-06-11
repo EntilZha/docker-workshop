@@ -4,9 +4,13 @@ web:
     - "8001:8000"
   links:
     - db
+  external_links:
+    - backend_web_1:backendweb
   environment:
     - DJANGO_MODE=development
   env_file: environment/secrets.txt
+  volumes:
+    - .:/web
 db:
   image: postgres
   environment:

@@ -278,6 +278,12 @@ In this section you should have:
 production.
 
 ## Frontend API
+Before diving into what you will do now, here is a summary of the API:
+1. `/api/view`: Provide `location` and `keywords` param and request is forwarded to backend api
+2. `/api/save`: Same as view, but will save the locations fetched. Normally mutating behavior with
+a GET is a nono, but it made my life easier...
+3. `/api/show`: Show a list of all saved locations and dates they were saved
+
 In this section the frontend api to call the backend api has been written for you. The application
 has the appropriate python configuration files and a `Dockerfile` but is missing `docker-compose`
 configuration. For the moment, we won't worry about separate configuration files for production
@@ -295,6 +301,18 @@ It will be helpful to know
 * The username of the database should be `trulia`
 * The password of the database should be taken from `secrets.txt` and passed using
 `POSTGRES_PASSWORD`
+
+Unfortunately, the application still won't work because there is nothing telling it about how
+to reach the backend api. Within `frontend/api/views.py` you will notice a variable `BACKEND_API_URL`.
+This configures where the application should look for the API using knowledge about linked services.
+Modify your `docker-compose.yml` to include an `external_link`. Note, you will need the fully name
+of the container (eg `backend_web_1`).
+
+Now the service should be fully running. Browse to [http://drydock:8001/api/show](http://drydock:8001/api/show)
+or one of the other urls to test the application.
+
+It turns out, there is a better and more general way (albeit more complex) to allow APIs to
+communicate with each other. 
 
 ## Nginx
 

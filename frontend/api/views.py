@@ -6,13 +6,14 @@ from django.utils import timezone
 import requests
 
 
-BACKEND_API_URL = 'http://backend_web:8000/places'
+BACKEND_API_URL = 'http://backendweb:8000/places'
 
 
 def nearby_places(location, keywords):
     params = {'location': location, 'keywords': keywords}
     places = requests.get(BACKEND_API_URL, params=params)
-    return places
+    print places.url
+    return places.json()
 
 
 @json_view
@@ -31,13 +32,11 @@ def save(request):
         raise BadRequest('Missing location or keywords parameter')
     places = nearby_places(request.GET.get('location'), request.GET.get('keywords'))
     for p in places:
-        db_place = Place(name=p['location'], date_saved=timezone.now())
+        db_place = Place(name=p, date_saved=timezone.now())
         db_place.save()
     return places
 
 
 @json_view
 def show(request):
-    if request.GET.get('location') is None or request.GET.get('keywords') is None:
-        raise BadRequest('Missing location or keywords parameter')
     return map(lambda p: {'name': p.name, 'date_saved': p.date_saved}, Place.objects.all())
