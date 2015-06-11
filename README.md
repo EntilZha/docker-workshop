@@ -211,9 +211,90 @@ After running the correct command, browse to
 [http://drydock:8000/places?location=san%20francisco&keywords=climbing](http://drydock:8000/places?location=san%20francisco&keywords=climbing)
 to check if the web app is running. You may need to replace `drydock` with your VMs IP address.
 
+### docker-compose
+For the backend, the compose files have already been written for you. This should provide a good
+example of a `docker-compose` configuration file and allow you to learn the `docker-compose` cli.
+In the portion covering the frontend, you will write your own `docker-compose` configuration file.
 
+In general, `docker-compose` is "simply" a wrapper around the `docker` cli. Anything you can do in
+`docker-compose` you can do with sufficient effort in `docker`.
+
+The default name for a `docker-compose` configuration file is `docker-compose.yml`. If the file is
+named something different, you will have to inform the cli of this difference. The configuration is
+also in yaml format. Open `compose-common.yml`, `compose-development.yml`, and
+`compose-production.yml` which configure `django` to work with `redis` in production and development
+configurations.
+
+It will also be helpful to open the [docker-compose reference](https://docs.docker.com/compose/yml/)
+
+
+
+#### Configuration
+`docker-compose` supports limited, but useful inheritance functionality. In this file we define
+the basic things about the `web` container and `redis` container that will be common across both
+development and production configurations.
+
+* build: specifies to build `web` with `Dockerfile` in the current directory
+* image: specifies to pull the official `redis` image
+* ports: bind the host port 8000 to the container port 8000
+* links: allow the given container connect to the other one seamlessly using the link name as the host
+* environment: supply environment variables
+* env_file: supply environment variables from a file
+* volumes: mount the current directory as a volume in the container. This is helpful for live coding
+without having to rebuild the container (django picks up changes and relaunches as well)
+
+#### Running
+Now it is time to launch our application. Before we launched our app with `docker`, but that didn't
+launch it with `redis` as well. Lets launch it once in each of development and production modes by
+using `compose-development.yml` and `compose-production.yml` respectively.
+
+As before `docker-compose --help` is very useful. The below commands are useful:
+* build: build any requisite images
+* up: start the set of containers
+* kill: kill containers running in background
+* rm: remove containers, useful to try if you are seeing odd behavior
+* -d: run in daemon mode
+* -f: tell `docker-compose` which configuration file to use
+
+Using the above and documentation, launch the set of services in development and then in production,
+killing/removing the containers in between. For each one
+1. Browse to [http://drydock:8000/places?keywords=climbing&location=oakland](http://drydock:8000/places?keywords=climbing&location=oakland)
+2. Notice the print message on the first request, then on a subsequent repeated request.
+3. Now try requesting the same url, except add another random query string parameter such as `hi=1`.
+This should cause the request cache to fail in production, but it should not issue an api request.
+
+#### How Redis was configured
+To see how redis was configured in the django application, browse to `backend/settings/production.py`.
+Within here, find the `CACHES` statement. In particular `"LOCATION": "redis://redis:6379/1"` configures
+django to communicate with the host named `redis`, which is the hostname given to the `redis` container
+since the link name was `redis` (much redis, much redis...).
+
+### Summary
+In this section you should have:
+1. Learned how to create a `Dockerfile`
+2. Learned how to use the `docker` cli
+3. Leanred how to use the `docker-compose` cli
+4. Seen an example of `docker-compose` configuration files that can be used in development and
+production.
 
 ## Frontend API
+In this section the frontend api to call the backend api has been written for you. The application
+has the appropriate python configuration files and a `Dockerfile` but is missing `docker-compose`
+configuration. For the moment, we won't worry about separate configuration files for production
+and development, and will hardcode environment variables setting the application mode. To get the
+app running, you will need to:
+* Create a web container building the `frontend` directory `Dockerfile`
+* Expose port 8001 on the host binding to the container port 8000. Binding to the host port 8000
+would cause a collision with the backend configured port.
+* Create a postgres container. Note the postgres password and username are left as default and
+should not be changed for this workshop.
+* Create a link from the web container to the database container
+
+It will be helpful to know
+* The hostname of the database container should be `db`
+* The username of the database should be `trulia`
+* The password of the database should be taken from `secrets.txt` and passed using
+`POSTGRES_PASSWORD`
 
 ## Nginx
 

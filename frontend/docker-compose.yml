@@ -1,0 +1,14 @@
+web:
+  build: .
+  ports:
+    - "8001:8000"
+  links:
+    - db
+  environment:
+    - DJANGO_MODE=development
+  env_file: environment/secrets.txt
+db:
+  image: postgres
+  environment:
+    - POSTGRES_USER=trulia
+  env_file: environment/secrets.txt

@@ -1,0 +1,5 @@
+django
+django-jsonview
+gunicorn
+psycopg2
+requests
