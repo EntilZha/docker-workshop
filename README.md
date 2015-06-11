@@ -4,6 +4,9 @@ creating a small collection of microservices and writing documentation/tests for
 Python experience is assumed, but it is helpful. Code for the web applications is written in Python,
 but for the purposes of this workshop mostly involves editing configuration-like files.
 
+IMPORTANT: If you are starting this tutorial, you need to checkout the `start` branch using:
+`git checkout start`
+
 ## Summary of Workshop
 You will build/complete a django web application (written in Python). The core logic has been
 written for you, the majority of the areas to fill in are related to configuration. The goal isn't
