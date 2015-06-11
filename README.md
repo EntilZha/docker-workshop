@@ -10,22 +10,26 @@ written for you, the majority of the areas to fill in are related to configurati
 to learn `django`, it is to learn `docker`.
 
 ### Backend JSON API
-The backend API is nothing more than a thin wrapper around a third party JSON API, in this case
-Google's geocoding API. For this demo we will be using the Google Maps geocode API.
+The backend API is nothing more than a thin wrapper around the Google Places API.
+
+In this portion you will learn:
+* How to write a `Dockerfile`
+* How to use docker cli
+* How to use docker-compose cli
 
 Completing this app will require passing environment variables/configuration files around
 correctly so that the secret API key is not in version control, but can be accessed by the app.
 The app itself will be one Docker container.
 
-Additionally, since APIs are commonly rate limited, you should cache requests made to external APIs.
-It is good practice to enable caching for requests made to your backend API. This will be done using
-an in memory cache called Redis and its accompanying package for python/django.
+The application also incorporates liberal use of caching. The application in production mode is
+configured to cache: requests to the application and external API calls. This is accomplished
+by using a `redis` container linked to the web server container.
 
 ### Frontend JSON API
-The frontend API should receive information from the user, make a request to backend, then return
-the result processed in some way. This will require: knowing the host of the backend api, and
-enabling communication to it via docker. The frontend will also have a basic user system to
-demonstrate how to setup Docker to work with databases (in this case Postgres).
+The frontend API has three endpoints:
+* `/view`: forwards request to backend to get a list of places based on `keywords` and `location`
+* `/save`: does the same as `/view` but saves the returned locations in postgres database
+* `/show`: lists all saved locations with timestamps
 
 ### Nginx reverse proxy
 As with most web applications, things should be behind a reverse proxy of some variety. In this
@@ -143,7 +147,7 @@ when working on the frontend API. Below is a summary of each file and its role w
 
 ### Files:
 * Dockerfile: define application build
-* compose-common.yml: sourced by compose-development.yml and compose-production.yml by `docker-compose`
+* compose-common.yml: sourced by compose-development.yml and compose-production.yml
 * docker-entrypoint.sh: executable file run by the container built by `Dockerfile`
 * manage.py: entrypoint for various django administration commands
 * requirements.txt: list of python requirements for project
@@ -292,8 +296,8 @@ app running, you will need to:
 * Create a web container building the `frontend` directory `Dockerfile`
 * Expose port 8001 on the host binding to the container port 8000. Binding to the host port 8000
 would cause a collision with the backend configured port.
-* Create a postgres container. Note the postgres password and username are left as default and
-should not be changed for this workshop.
+* Create a postgres container. Note the postgres password and username need to be configured via
+environment variables using `POSTGRES_PASSWORD` and `POSTGRES_USER` as described below.
 * Create a link from the web container to the database container
 
 It will be helpful to know
@@ -357,6 +361,11 @@ cd docker-workshop/nginx
 docker build -t workshop-nginx .
 docker run --name workshop-nginx -p 80:80 workshop-nginx
 ```
+
+Now you should have the full application running: backend, frontend, and nginx tying them together.
+
+# Swagger
+WIP/TBD soon.
 
 # Licensing
 This workshop, including code and documentation is licensed under the Creative Commons Attribution
