@@ -139,7 +139,79 @@ input your API key. While you are at it, set the django secret key as well.
 
 ## Backend API
 This first part of the project is mostly written for you to use as a reference
-when working on the frontend API.
+when working on the frontend API. Below is a summary of each file and its role within `backend`:
+
+### Files:
+* Dockerfile: define application build
+* compose-common.yml: sourced by compose-development.yml and compose-production.yml by `docker-compose`
+* docker-entrypoint.sh: executable file run by the container built by `Dockerfile`
+* manage.py: entrypoint for various django administration commands
+* requirements.txt: list of python requirements for project
+* environment/secrets.txt: copied from secrets.txt.template and not in version control
+* backend: contains django project. Particular attention should be paid to `backend/settings`
+since you may need to configure variables here soon.
+* places: django app with code for fetching google places data. You shouldn't need to change
+anything in here
+
+### Dockerfile
+The `Dockerfile` is responsible for configuring our application and turning it into an image. You
+will write the `Dockerfile` knowing that:
+* You should use the official python 2 image as a base
+* Set the environment variable "PYTHONUNBUFFERED" to 1
+* The contents of `backend` (at root of repo) should end up in `/web` in the container.
+* The current working directory should end up being `/web`
+* The python requirements in `requirements.txt` need to be installed via
+`pip install -r requirements.txt`
+* Port 8000 should be exposed
+* Add a volume at `/web`, this will be explained later
+* Set the entrypoint of the container to be `docker-entrypoint.sh`
+
+You may find the reference at [docker.com](https://docs.docker.com/reference/builder/) useful.
+Below is a list of the directives required to do the above with short descriptions.
+* FROM: specifies which image should be used as a base
+* ENV: sets environment variables
+* ADD: copy file from the host to the container
+* WORKDIR: change the current directory
+* RUN: execute the given command
+* EXPOSE: expose port on container to outside world
+* VOLUME: add a volume which the host can mount onto
+* ENTRYPOINT: set the container's entrypoint command
+
+Next up, lets try to build and run the application container. It is highly recommended to use the
+`--help` flag on the docker cli. It is a simple and concise way
+to learn what commands and options are available. Try doing `docker --help` now to see what
+commands there are.
+
+There are quite a few, below are the most commonly used and most helpful:
+* build: builds a new image based on a Dockerfile.
+* exec: run a command within an already running container. This is extremely helpful for debugging.
+In practice you would use `docker exec -it image_name bash`. This tells docker to execute bash,
+interactively (-i) with pseudo-TTY allowing you to run arbitrary bash commands interactively.
+* run: run an already built image as a new container
+* kill: stop a running container
+* rm: remove a stopped container
+* logs: prints a containers logs. This is useful for debugging problems when running containers in
+the background
+
+Now, lets try building and running the application. Keep in mind we need to:
+* Pass the API secret key to `docker run`
+* Set `DJANGO_MODE` to development
+* Bind the host port 8000 to the container exposed port 8000
+
+You may find the following flags helpful for building:
+* -t: tag the image with a name
+
+You may find the following flags helpful for running:
+* -e: set environment variables, such as your API key (we will learn soon how to set it in a better
+way)
+* --name: name the container. By default Docker assigns a random name
+* -p: configure exposed ports
+
+After running the correct command, browse to
+[http://drydock:8000/places?location=san%20francisco&keywords=climbing](http://drydock:8000/places?location=san%20francisco&keywords=climbing)
+to check if the web app is running. You may need to replace `drydock` with your VMs IP address.
+
+
 
 ## Frontend API
 
