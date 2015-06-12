@@ -1,44 +1,62 @@
 # Docker Workshop
+## Summary
 In this workshop you will learn the basics of `docker`, `docker-compose`, and `Swagger` through
-creating a small collection of microservices and writing documentation/tests for them. No Django or
-Python experience is assumed, but it is helpful. Code for the web applications is written in Python,
-but for the purposes of this workshop mostly involves editing configuration-like files.
+creating a small collection of microservices and writing documentation/tests for them.
 
-IMPORTANT: If you are starting this tutorial, you need to checkout the `start` branch using:
-`git checkout start`
+The workshop is composed of three services: backend, frontend, and nginx. The frontend and backend
+are both JSON APIs written using Django Python. Both applications are complete and do not require
+any additional coding.
 
-## Summary of Workshop
-You will build/complete a django web application (written in Python). The core logic has been
-written for you, the majority of the areas to fill in are related to configuration. The goal isn't
-to learn `django`, it is to learn `docker`.
+At the end of the workshop, nginx will be configured to serve requests to:
+* `/places`: Accepts `location` and `keywords` parameters, sends them to the Google Places API and
+returns an array of location names. This is run on the backend
+* `/api/view`: Frontend endpoint which does the same thing as `/places`
+* `/api/save`: Frontend endpoint which requests fromk `/places` then saves each location with the
+timestamp it was fetched.
+* `/api/show`: Returns a list of saved locations since the app started.
 
-### Backend JSON API
-The backend API is nothing more than a thin wrapper around the Google Places API.
+The infrastructure goals are:
+* Configure the backend to cache using Redis
+* Configure the backend with a Google Places Webservice API Key
+* Configure the frontend to store places in a Postgres database
+* Configure Nginx to reverse proxy to both the frontend and backend
+* Write Swagger documentation for the API
+* Use Swagger code generation in integration tests
 
-In this portion you will learn:
-* How to write a `Dockerfile`
-* How to use docker cli
-* How to use docker-compose cli
+## IMPORTANT
+This tutorial can be completed in one of two different ways:
+* `git checkout master`: This version has all the "solutions" and can be used for learning by
+example
+* `git checkout start`: This version removes several files so you can implement them for a more
+hands on experience.
 
-Completing this app will require passing environment variables/configuration files around
-correctly so that the secret API key is not in version control, but can be accessed by the app.
-The app itself will be one Docker container.
+Choose your adventure based on your preference. The guide below will mention where you are expected
+to implement files, if you use `master` they will already be there.
 
-The application also incorporates liberal use of caching. The application in production mode is
-configured to cache: requests to the application and external API calls. This is accomplished
-by using a `redis` container linked to the web server container.
+### Backend Task Summary
+During the backend portion of the workshop you will:
+* Write a `Dockerfile` for the django web application
+* Build the django app image from the `Dockerfile` using the docker cli
+* Run the django app using the docker cli
+* Run both the web app and Redis using `docker-compose`
 
-### Frontend JSON API
-The frontend API has three endpoints:
-* `/view`: forwards request to backend to get a list of places based on `keywords` and `location`
-* `/save`: does the same as `/view` but saves the returned locations in postgres database
-* `/show`: lists all saved locations with timestamps
+The files for the backend section are in `docker-workshop/backend`
 
-### Nginx reverse proxy
-As with most web applications, things should be behind a reverse proxy of some variety. In this
-workshop you will learn how Nginx can be configured to accomplish this.
+## Frontend Task Summary
+During the frontend portion of the workshop you will:
+* Write a `docker-compose.yml` file to configure the web app with postgres
+* Run the web app and postgres using `docker-compose`
 
-### Swagger Docs and Testing
+The files for the backend section are in `docker-workshop/frontend`
+
+## Nginx Task Summary
+There are no tasks to be done in this section outside of minor url changes in specified python
+files. This section is primarily to show one way to configure nginx to act as a reverse proxy and/or
+load balancer or the web services running in docker.
+
+The files for the backend section are in `docker-workshop/nginx`
+
+## Swagger Docs and Testing
 Its standard practice after implementing an API to test and/or document it. Unfortunately,
 documentation has a tendency to fall out of sync with the code..
 
@@ -93,62 +111,90 @@ regular Docker commands, but it makes it much easier.
 NOTE: if you run into permissions issues, download the binary using curl to your downloads
 directory, then rename it to docker-compose, chmod it, then move it to `/usr/local/bin`.
 
-## Install Python
-Although we will be working mostly within Docker containers, it would be helpful to have a recent
-Python installation. For Macs, you can run `brew install python`. Also make sure that Python's
-package manager (pip) is installed. When this is done, execute `pip install -r requirements.txt`
-within this directory. If you would like to avoid dependency conflicts with existing projects, you
-can make use of [virtualenv](https://virtualenv.pypa.io/en/latest/)
-
 ## API Key Setup
 Before getting started, you will need to signup for the
-[google API console](https://console.developers.google.com/project). Once you complete adding a
-project, enable the Google Places API for Webservices (APIs & auth -> APIs). Next you will need to
-generate credentials for reaching the API (APIs & auth -> credentials). Use the "Public API Access"
-option to create a "server key". The last step will be to save this API key in a suitable location.
+[google API console](https://console.developers.google.com/project).
+1. Enable the Google Places API for Webservices (APIs & auth -> APIs), click see more.
+2. Next you will need to generate credentials for reaching the API (APIs & auth -> credentials).
+Use the "Public API Access" option to create a "server key".
+3. Test your key by going to [https://maps.googleapis.com/maps/api/place/search/json?location=-33.88471,151.218237&radius=100&sensor=true&key=MYKEYHERE](https://maps.googleapis.com/maps/api/place/search/json?location=-33.88471,151.218237&radius=100&sensor=true&key=MYKEYHERE), make sure to replace `MYKEYHERE` with your actual key
 
-One way to do this is to create a bash script at `~/.secrets`. The file should look like:
-```bash
-export GOOGLE_PLACE_API_KEY=mysecretgoeshere
-```
+Next, browse to `/docker-workshop/backend/environment`, copy `secrets.txt.template` to
+`secrets.txt`, then input your API key. This won't get used in the `Dockerfile` section, but will
+get used in the docker-compose part of the backend section.
 
-Then add this line to your `~/.bashrc`: `source ~/.secrets`.
+## FAQ and Common Problems
+### If you get TLS errors, or issues with running any Docker command
+Run `boot2docker halt; boot2docker up`. This should output three environment variables which you
+need to place in your `~/.bashrc` and then source by running `source ~/.bashrc`. These variables
+tell the docker client running on your machine (assuming you run mac) where the docker daemon
+(running in VirtualBox) lives.
+### API Access Denied
+Double check that in the Google API console you have clicked `enable` on the Google Places API.
 
-Lets test that you can reach the Google Place API. As part of the python installation
-(with `requirements.txt`) you also implicitly installed the python library we will use with the
-Google Places API. To test, start a python terminal session by typing `python` into your terminal.
-Then execute each line below:
+# Docker CLI Crash Course
+Before starting work on the API, it is helpful to know several docker commands. Below is a list of
+commonly used commands and flags, followed by several examples:
+* build: builds a new image based on a Dockerfile.
+* exec: run a command within an already running container. This is extremely helpful for debugging.
+In practice you would use `docker exec -it image_name bash`. This tells docker to execute bash,
+interactively (-i) with pseudo-TTY allowing you to run arbitrary bash commands interactively.
+* run: run an already built image as a new container
+* kill: stop a running container
+* rm: remove a stopped container
+* logs: prints a containers logs. This is useful for debugging problems when running containers in
+the background
 
-```python
-import os
-from googleplaces import GooglePlaces
+## Hello World
+Lets first use `docker run`. `docker run` takes at least one argument, the image to run as a new
+container. Arguments after that are optional and can override the command the container runs
 
-API_KEY = os.getenv("GOOGLE_PLACE_API_KEY")
-google_places = GooglePlaces(API_KEY)
+Run: `docker run hello-world`
 
-query_result = google_places.nearby_search(radius=50000, location='San Francisco, CA', keyword='climb touchstone')
+You should see that first docker looks if the image named `hello-world` exists locally, since it
+doesn't it checks if [Docker Hub](hub.docker.com) has a matching image. Since there is one, it will
+download the image, then run it as a new container. Since the process bound to the container exits,
+the container will also stop.
 
-for place in query_result.places:
-    print place.name
-```
+You can verify this by running `docker ps`.
 
-The result should be a list of all the Touchstone climbing gyms in the area:
-* Mission Cliffs
-* Diablo Rock Gym
-* Berkeley Ironworks
-* The Studio Climbing
-* Great Western Power Company
+You can see the stopped container by running `docker ps -a`. You will see several columns:
+* Container ID: identifier for container assigned randomly
+* Image: image the container was built from
+* Command: entrypoint command that the container is executing
+* Created: Creation date
+* Status: running status
+* Ports: ports the container exposes (eg 8000/tcp) and if a host port is bound to it (eg 0.0.0.0:8000 -> 8000/tcp)
+* Names: name of container, assigned randomly by default, assignable via the `--name` flag
 
-Also take note that this allowed you to access the API secret key without committing it to the
-source. We will use a similar technique later on with Docker. In anticipation of this, browse
-to `/docker-workshop/backend/environment`, copy `secrets.txt.template` to `secrets.txt`, then
-input your API key. While you are at it, set the django secret key as well.
+Since most services run in docker are persistent, lets write a new version of hello world which
+runs indefinitely printing "Hello World" once every second.
 
-## Backend API
-This first part of the project is mostly written for you to use as a reference
-when working on the frontend API. Below is a summary of each file and its role within `backend`:
+Run: `docker run ubuntu:14.10 /bin/sh -c "while true; do echo hello world; sleep 1; done"`
 
-### Files:
+Now the run command takes additional arguments which specify which command it should run instead of
+the default command for the container. Since the while loop is blocking, the container will now not exit. Lets suppose there was some
+urgent production issue on this container and we needed to "login" and inspect its environment
+variables. You can do this by running
+
+# Dockerfile Crash Course
+* [Docker Docs](https://docs.docker.com/reference/builder/)
+* FROM: specifies which image should be used as a base
+* ENV: sets environment variables
+* ADD: copy file from the host to the container
+* WORKDIR: change the current directory
+* RUN: execute the given command
+* EXPOSE: expose port on container to outside world
+* VOLUME: add a volume which the host can mount onto
+* ENTRYPOINT: set the container's entrypoint command
+
+# Backend API
+In this section you will
+* Write the `Dockerfile` for the web app
+* Build and run an image/container for the web app
+* Run the web app and Redis using docker-compose
+
+## Files:
 * Dockerfile: define application build
 * compose-common.yml: sourced by compose-development.yml and compose-production.yml
 * docker-entrypoint.sh: executable file run by the container built by `Dockerfile`
@@ -173,16 +219,7 @@ will write the `Dockerfile` knowing that:
 * Add a volume at `/web`, this will be explained later
 * Set the entrypoint of the container to be `docker-entrypoint.sh`
 
-You may find the reference at [docker.com](https://docs.docker.com/reference/builder/) useful.
-Below is a list of the directives required to do the above with short descriptions.
-* FROM: specifies which image should be used as a base
-* ENV: sets environment variables
-* ADD: copy file from the host to the container
-* WORKDIR: change the current directory
-* RUN: execute the given command
-* EXPOSE: expose port on container to outside world
-* VOLUME: add a volume which the host can mount onto
-* ENTRYPOINT: set the container's entrypoint command
+
 
 Next up, lets try to build and run the application container. It is highly recommended to use the
 `--help` flag on the docker cli. It is a simple and concise way
@@ -190,15 +227,7 @@ to learn what commands and options are available. Try doing `docker --help` now 
 commands there are.
 
 There are quite a few, below are the most commonly used and most helpful:
-* build: builds a new image based on a Dockerfile.
-* exec: run a command within an already running container. This is extremely helpful for debugging.
-In practice you would use `docker exec -it image_name bash`. This tells docker to execute bash,
-interactively (-i) with pseudo-TTY allowing you to run arbitrary bash commands interactively.
-* run: run an already built image as a new container
-* kill: stop a running container
-* rm: remove a stopped container
-* logs: prints a containers logs. This is useful for debugging problems when running containers in
-the background
+
 
 Now, lets try building and running the application. Keep in mind we need to:
 * Pass the API secret key to `docker run`
