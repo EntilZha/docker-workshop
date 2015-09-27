@@ -52,7 +52,7 @@ The files for the backend section are in `docker-workshop/frontend`
 ## Nginx Task Summary
 There are no tasks to be done in this section outside of minor url changes in specified python
 files. This section is primarily to show one way to configure nginx to act as a reverse proxy and/or
-load balancer or the web services running in docker.
+load balancer for the web services running in docker.
 
 The files for the backend section are in `docker-workshop/nginx`
 
